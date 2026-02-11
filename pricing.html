@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng giá nâng cấp - SMAX AI Technology</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7fe;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .pricing-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #e2e8f0;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.1);
+            border-color: #cbd5e1;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .stagger-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toggle-knob {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+
+<body x-data="{ billingCycle: 'monthly' }">
+
+    <!-- Marketing Navigation (Shopify-inspired links, SMAX Style) -->
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Logo & Brand -->
+            <div class="flex items-center space-x-10">
+                <a href="subscription_center.html"
+                    class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                    <div class="bg-blue-600 p-1.5 rounded-lg text-white">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <span class="font-black text-lg tracking-tight text-slate-800">APP.VN</span>
+                </a>
+
+                <!-- Marketing Links -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <div class="relative group">
+                        <button
+                            class="flex items-center text-sm font-bold text-slate-600 group-hover:text-black transition-colors">
+                            Solutions <i data-lucide="chevron-down" class="w-3.5 h-3.5 ml-1.5 opacity-50"></i>
+                        </button>
+                    </div>
+                    <a href="#" class="text-sm font-bold text-black border-b-2 border-blue-600 pb-1">Pricing</a>
+                    <div class="relative group">
+                        <button
+                            class="flex items-center text-sm font-bold text-slate-600 group-hover:text-black transition-colors">
+                            Resources <i data-lucide="chevron-down" class="w-3.5 h-3.5 ml-1.5 opacity-50"></i>
+                        </button>
+                    </div>
+                    <a href="#"
+                        class="text-sm font-bold text-slate-600 hover:text-black transition-colors">Enterprise</a>
+                    <div class="relative group">
+                        <button
+                            class="flex items-center text-sm font-bold text-slate-600 group-hover:text-black transition-colors">
+                            What's new <i data-lucide="chevron-down" class="w-3.5 h-3.5 ml-1.5 opacity-50"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Actions -->
+            <div class="flex items-center space-x-6">
+                <a href="#" class="text-sm font-bold text-slate-600 hover:text-black transition-colors">Log in</a>
+                <button
+                    class="px-6 py-2.5 bg-black text-white text-sm font-black rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-black/10">
+                    Start free trial
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <header class="max-w-4xl mx-auto text-center py-16 px-6">
+        <h1 class="text-3xl md:text-5xl font-black tracking-tight text-slate-800 mb-6 stagger-in">
+            Nâng cấp gói cước của bạn
+        </h1>
+        <p class="text-slate-500 mb-12 stagger-in font-medium" style="animation-delay: 0.1s">
+            Lựa chọn gói cước phù hợp nhất để tối ưu hóa hiệu quả kinh doanh của bạn.
+        </p>
+
+        <!-- Billing Toggle (Matched with Dashboard style) -->
+        <div class="flex items-center justify-center space-x-4 stagger-in" style="animation-delay: 0.2s">
+            <span :class="billingCycle === 'monthly' ? 'text-slate-800 font-bold' : 'text-slate-400'"
+                class="text-sm transition-colors font-bold">Thanh toán tháng</span>
+            <button @click="billingCycle = (billingCycle === 'monthly' ? 'yearly' : 'monthly')"
+                class="w-14 h-8 bg-slate-200 rounded-full p-1 relative focus:outline-none transition-all border border-slate-300 shadow-inner">
+                <div class="w-6 h-6 bg-white rounded-full shadow-md toggle-knob"
+                    :style="billingCycle === 'yearly' ? 'transform: translateX(24px)' : 'transform: translateX(0)'">
+                </div>
+            </button>
+            <div class="flex items-center">
+                <span :class="billingCycle === 'yearly' ? 'text-slate-800 font-bold' : 'text-slate-400'"
+                    class="text-sm transition-colors font-bold">Thanh toán năm</span>
+                <span
+                    class="ml-2 px-2 py-0.5 bg-green-100 text-green-600 text-[10px] font-black rounded-full border border-green-200 uppercase tracking-tighter">Tiết
+                    kiệm 25%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Pricing Grid -->
+    <main class="max-w-7xl mx-auto px-6 pb-32">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            <!-- Basic Plan -->
+            <div class="pricing-card glass-card rounded-[2rem] p-8 flex flex-col stagger-in"
+                style="animation-delay: 0.3s">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-800 mb-1">Cơ bản</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cho cá nhân</p>
+                    </div>
+                </div>
+
+                <div class="mb-8 h-20 flex flex-col justify-center">
+                    <div class="flex items-baseline">
+                        <span class="text-4xl font-black tracking-tighter text-slate-800"
+                            x-text="billingCycle === 'monthly' ? '590.000đ' : '440.000đ'"></span>
+                        <span class="ml-1 text-[10px] font-bold text-slate-400 uppercase">/tháng</span>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1" x-show="billingCycle === 'yearly'">*Thanh toán
+                        trả trước theo năm</p>
+                </div>
+
+                <div class="space-y-6 flex-grow">
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Thông số chính
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-center text-xs font-bold text-slate-600">
+                                <i data-lucide="users" class="w-4 h-4 text-blue-500 mr-3"></i>
+                                5.000 Khách hàng
+                            </li>
+                            <li class="flex items-center text-xs font-bold text-slate-600">
+                                <i data-lucide="zap" class="w-4 h-4 text-blue-500 mr-3"></i>
+                                50.000 Tin nhắn/tháng
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Tính năng nổi bật
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                Quản lý bán hàng cơ bản
+                            </li>
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                CRM mini
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <button
+                        class="w-full py-4 bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Dùng
+                        thử ngay</button>
+                </div>
+            </div>
+
+            <!-- Grow Plan -->
+            <div class="pricing-card glass-card rounded-[2rem] p-8 flex flex-col stagger-in border-blue-200"
+                style="animation-delay: 0.4s">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-800 mb-1">Tăng trưởng</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cho đội nhóm nhỏ</p>
+                    </div>
+                    <span
+                        class="bg-blue-600 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter shadow-lg shadow-blue-500/20">Phổ
+                        biến nhất</span>
+                </div>
+
+                <div class="mb-8 h-20 flex flex-col justify-center">
+                    <div class="flex items-baseline">
+                        <span class="text-4xl font-black tracking-tighter text-slate-800"
+                            x-text="billingCycle === 'monthly' ? '1.250.000đ' : '940.000đ'"></span>
+                        <span class="ml-1 text-[10px] font-bold text-slate-400 uppercase">/tháng</span>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1" x-show="billingCycle === 'yearly'">*Thanh toán
+                        trả trước theo năm</p>
+                </div>
+
+                <div class="space-y-6 flex-grow">
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Thông số chính
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-center text-xs font-bold text-slate-600">
+                                <i data-lucide="users" class="w-4 h-4 text-blue-500 mr-3"></i>
+                                20.000 Khách hàng
+                            </li>
+                            <li class="flex items-center text-xs font-bold text-slate-600">
+                                <i data-lucide="zap" class="w-4 h-4 text-blue-500 mr-3"></i>
+                                200.000 Tin nhắn/tháng
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Tính năng nổi bật
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                Full tính năng gói Cơ bản
+                            </li>
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                Automation nâng cao
+                            </li>
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                5 Tài khoản nhân viên
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <button
+                        class="w-full py-4 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20">Nâng
+                        cấp ngay</button>
+                </div>
+            </div>
+
+            <!-- Advanced Plan -->
+            <div class="pricing-card glass-card rounded-[2rem] p-8 flex flex-col stagger-in"
+                style="animation-delay: 0.5s">
+                <div class="mb-6">
+                    <h3 class="text-xl font-black text-slate-800 mb-1">Nâng cao</h3>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cho doanh nghiệp nhỏ</p>
+                </div>
+
+                <div class="mb-8 h-20 flex flex-col justify-center">
+                    <div class="flex items-baseline">
+                        <span class="text-4xl font-black tracking-tighter text-slate-800"
+                            x-text="billingCycle === 'monthly' ? '2.500.000đ' : '1.875.000đ'"></span>
+                        <span class="ml-1 text-[10px] font-bold text-slate-400 uppercase">/tháng</span>
+                    </div>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1" x-show="billingCycle === 'yearly'">*Thanh toán
+                        trả trước theo năm</p>
+                </div>
+
+                <div class="space-y-6 flex-grow">
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Thông số chính
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-center text-xs font-bold text-slate-600">
+                                <i data-lucide="users" class="w-4 h-4 text-blue-500 mr-3"></i>
+                                50.000 Khách hàng
+                            </li>
+                            <li class="flex items-center text-xs font-bold text-slate-600">
+                                <i data-lucide="zap" class="w-4 h-4 text-blue-500 mr-3"></i>
+                                500.000 Tin nhắn/tháng
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Tính năng nổi bật
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                Quản lý đơn hàng Livestream
+                            </li>
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                Tích hợp Zalo OA chuyên sâu
+                            </li>
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 mr-3 mt-0.5"></i>
+                                15 Tài khoản nhân viên
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <button
+                        class="w-full py-4 bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg">Nâng
+                        cấp ngay</button>
+                </div>
+            </div>
+
+            <!-- Plus Plan -->
+            <div class="pricing-card glass-card rounded-[2rem] p-8 flex flex-col stagger-in border-slate-100"
+                style="animation-delay: 0.6s">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-800 mb-1">May đo</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tùy biến theo nhu cầu
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mb-8 h-20 flex flex-col justify-center">
+                    <p class="text-3xl font-black text-blue-600 uppercase tracking-tighter">Liên hệ</p>
+                    <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Dự án doanh nghiệp lớn
+                    </p>
+                </div>
+
+                <div class="space-y-6 flex-grow">
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Dành cho</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start text-xs font-semibold text-slate-500 italic">
+                                Doanh nghiệp cần giải pháp tùy biến hoàn toàn (Custom Logic).
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 tracking-tight uppercase">Điểm mạnh</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-blue-500 mr-3 mt-0.5"></i>
+                                Không giới hạn tài nguyên
+                            </li>
+                            <li class="flex items-start text-xs font-semibold text-slate-500">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-blue-500 mr-3 mt-0.5"></i>
+                                Đội ngũ hỗ trợ riêng 24/7
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <button
+                        class="w-full py-4 border-2 border-slate-800 text-slate-800 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all">Liên
+                        hệ hỗ trợ</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="mt-20 text-center stagger-in" style="animation-delay: 0.7s">
+            <a href="subscription_center.html"
+                class="inline-flex items-center text-xs font-black text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-3"></i> Quay lại Dashboard
+            </a>
+        </div>
+    </main>
+
+    <footer class="bg-white/50 py-16 px-6 border-t border-slate-100 mt-32 backdrop-blur-sm">
+        <div
+            class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0 text-center md:text-left">
+            <div class="flex items-center space-x-2 grayscale opacity-50">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                <span class="text-sm font-bold uppercase tracking-widest">SMAX AI Technology</span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">&copy; 2026. All rights reserved.
+                Powered by Antigravity Kit.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
