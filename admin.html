@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Subscription Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.5/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+
+        .stagger-in {
+            animation: fadeInUp 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-800" x-data="{
+    dateRangeLabel: '30 ngày qua',
+    datePickerOpen: false,
+    packageFilter: 'All',
+    searchQuery: '',
+    timeRange: 'all',
+    stats: {
+        totalSubscribers: 12543,
+        activeSubscriptions: 8902,
+        monthlyRevenue: '2.4B',
+        trialChurn: '12.4%',
+        paidChurn: '1.2%'
+    },
+    expiringSoon: [
+        { id: 1, name: 'Nguyễn Văn A', package: 'MINI CDP', expiry: '2026-03-05', status: 'Warning' },
+        { id: 2, name: 'Trần Thị B', package: 'CDP SMAXAPP 1', expiry: '2026-03-12', status: 'Danger' },
+        { id: 3, name: 'Lê Văn C', package: 'GÓI CƠ BẢN', expiry: '2026-03-25', status: 'Normal' },
+        { id: 4, name: 'Phạm Minh D', package: 'MINI CDP', expiry: '2026-02-28', status: 'Critical' },
+        { id: 5, name: 'Hoàng Anh E', package: 'CDP SMAXAPP 1', expiry: '2026-03-15', status: 'Warning' }
+    ],
+    getFilteredExpiring() {
+        return this.expiringSoon.filter(item => {
+            const matchesPackage = this.packageFilter === 'All' || item.package === this.packageFilter;
+            const matchesSearch = item.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+            return matchesPackage && matchesSearch;
+        });
+    },
+    planStats: [
+        { name: 'Gói Cơ Bản', count: 3420, color: 'blue', icon: 'zap' },
+        { name: 'Mini CDP', count: 4210, color: 'indigo', icon: 'layers' },
+        { name: 'CDP SmaxApp 1', count: 852, color: 'emerald', icon: 'crown' },
+        { name: 'Trải Nghiệm', count: 421, color: 'slate', icon: 'test-tube' }
+    ]
+}">
+
+    <!-- Navigation -->
+    <nav class="bg-[#1e1e2d] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-6">
+            <div class="bg-blue-600 p-2 rounded-lg">
+                <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+            </div>
+            <a href="subscription_center.html" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                <span class="font-black text-lg tracking-tight">APP.VN</span>
+                <span class="text-slate-500">/</span>
+                <span class="text-blue-400 text-sm font-bold">Admin Dashboard</span>
+            </a>
+        </div>
+        <div class="flex items-center space-x-6">
+            <div
+                class="hidden md:flex items-center space-x-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <span>Trạng thái hệ thống:</span>
+                <span class="flex items-center text-green-500"><span
+                        class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> Hoạt động</span>
+            </div>
+            <div x-data="{ userMenuOpen: false }" class="relative">
+                <button @click="userMenuOpen = !userMenuOpen" @click.away="userMenuOpen = false"
+                    class="w-8 h-8 rounded-full bg-slate-600 border border-slate-700 overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    <img src="https://i.pravatar.cc/100?u=antigravity" alt="Avatar">
+                </button>
+                <div x-show="userMenuOpen" x-cloak x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="transform opacity-0 scale-95"
+                    x-transition:enter-end="transform opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="transform opacity-100 scale-100"
+                    x-transition:leave-end="transform opacity-0 scale-95"
+                    class="absolute right-0 mt-2 w-56 origin-top-right rounded-xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none z-[100] text-slate-800 py-2">
+                    <div class="px-4 py-3 border-b border-slate-100">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Administrator</p>
+                        <p class="text-xs font-black text-slate-800">Antigravity AI</p>
+                    </div>
+                    <div class="py-1">
+                        <a href="subscription_center.html"
+                            class="flex items-center px-4 py-2 text-[10px] font-black hover:bg-slate-50 transition-colors uppercase tracking-widest text-slate-600">
+                            <i data-lucide="layout" class="w-3.5 h-3.5 mr-3 text-slate-400"></i>
+                            Về Client View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-8 px-6 space-y-8">
+        <!-- Header & Top Metrics -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 stagger-in relative"
+            :class="datePickerOpen ? 'z-[100]' : 'z-20'">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight">Tổng quan quản trị</h1>
+                <p class="text-slate-400 font-medium text-sm">Chào mừng quay lại, đây là dữ liệu mới nhất từ hệ thống.
+                </p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Advanced Date Range Picker -->
+                <div class="relative" x-data="{
+                    activeRange: '30d',
+                    ranges: [
+                        { label: '7 ngày qua', value: '7d' },
+                        { label: '30 ngày qua', value: '30d' },
+                        { label: '90 ngày qua', value: '90d' },
+                        { label: 'Tất cả', value: 'all' }
+                    ],
+                    init() {
+                        this.fp = flatpickr(this.$refs.picker, {
+                            mode: 'range',
+                            inline: true,
+                            dateFormat: 'd/m/Y',
+                            onClose: (selectedDates) => {
+                                if (selectedDates.length === 2) {
+                                    const start = selectedDates[0].toLocaleDateString('vi-VN');
+                                    const end = selectedDates[1].toLocaleDateString('vi-VN');
+                                    $data.dateRangeLabel = `${start} - ${end}`;
+                                    this.activeRange = 'custom';
+                                }
+                            }
+                        });
+                    },
+                    setRange(val, label) {
+                        this.activeRange = val;
+                        $data.dateRangeLabel = label;
+                        const end = new Date();
+                        let start = new Date();
+                        if (val === '7d') start.setDate(end.getDate() - 7);
+                        else if (val === '30d') start.setDate(end.getDate() - 30);
+                        else if (val === '90d') start.setDate(end.getDate() - 90);
+                        else if (val === 'all') start.setFullYear(end.getFullYear() - 2);
+                        this.fp.setDate([start, end]);
+                    }
+                }" :class="datePickerOpen ? 'z-[100]' : 'z-auto'" @click.away="datePickerOpen = false">
+                    <button @click="datePickerOpen = !datePickerOpen"
+                        class="flex items-center space-x-3 bg-white border border-slate-100 px-4 py-2 rounded-xl shadow-sm hover:bg-slate-50 transition-all h-10 min-w-[200px]">
+                        <i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i>
+                        <span class="text-xs font-black text-slate-700 uppercase tracking-widest"
+                            x-text="dateRangeLabel"></span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+
+                    <!-- Dropdown Panel -->
+                    <div x-show="datePickerOpen" x-cloak x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                        class="absolute right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 flex z-[1000] overflow-hidden min-w-[500px]">
+
+                        <!-- Quick Select Sidebar -->
+                        <div class="w-40 border-r border-slate-50 p-2 space-y-1">
+                            <p class="px-3 py-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                                Chọn nhanh</p>
+                            <template x-for="r in ranges" :key="r.value">
+                                <button @click="setRange(r.value, r.label)"
+                                    :class="activeRange === r.value ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-50'"
+                                    class="w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold transition-all"
+                                    x-text="r.label"></button>
+                            </template>
+                        </div>
+
+                        <!-- Calendar Section -->
+                        <div class="p-2">
+                            <div x-ref="picker" class="flatpickr-custom"></div>
+                            <div class="mt-4 flex justify-end space-x-2 px-2 pb-2">
+                                <button @click="datePickerOpen = false"
+                                    class="px-4 py-2 text-[10px] font-black uppercase text-slate-400 hover:text-slate-600">Hủy</button>
+                                <button @click="datePickerOpen = false"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">Áp
+                                    dụng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <a href="analytics.html"
+                        class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-100 transition-all flex items-center shadow-sm h-10">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i> Phân tích tăng trưởng
+                    </a>
+                    <button
+                        class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all flex items-center h-10">
+                        <i data-lucide="download" class="w-4 h-4 mr-2"></i> Xuất báo cáo
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Grid (5 Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 stagger-in" style="animation-delay: 0.1s">
+            <div class="glass-card rounded-3xl p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Người đăng ký</span>
+                    <div class="p-2 bg-blue-50 text-blue-500 rounded-lg"><i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800" x-text="stats.totalSubscribers.toLocaleString()"></h3>
+                <p class="text-[10px] text-green-500 font-bold mt-1 flex items-center"><i data-lucide="trending-up"
+                        class="w-3 h-3 mr-1"></i> +12.5% so với tháng trước</p>
+            </div>
+            <div class="glass-card rounded-3xl p-6 border-l-4 border-emerald-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Plans</span>
+                    <div class="p-2 bg-emerald-50 text-emerald-500 rounded-lg"><i data-lucide="check-circle"
+                            class="w-4 h-4"></i></div>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800" x-text="stats.activeSubscriptions.toLocaleString()"></h3>
+                <p class="text-[10px] text-green-500 font-bold mt-1 flex items-center"><i data-lucide="trending-up"
+                        class="w-3 h-3 mr-1"></i> +8.2% tỉ lệ giữ chân</p>
+            </div>
+            <div class="glass-card rounded-3xl p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Doanh thu tháng</span>
+                    <div class="p-2 bg-orange-50 text-orange-500 rounded-lg"><i data-lucide="dollar-sign"
+                            class="w-4 h-4"></i></div>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800" x-text="stats.monthlyRevenue"></h3>
+                <p class="text-[10px] text-green-500 font-bold mt-1 flex items-center"><i data-lucide="trending-up"
+                        class="w-3 h-3 mr-1"></i> +15.8% (Target 2B)</p>
+            </div>
+            <div class="glass-card rounded-3xl p-6 border-l-4 border-orange-600 bg-orange-50/20">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rời bỏ (Dùng
+                        thử)</span>
+                    <div class="p-2 bg-orange-100 text-orange-600 rounded-lg"><i data-lucide="user-x"
+                            class="w-4 h-4"></i></div>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800" x-text="stats.trialChurn"></h3>
+                <p class="text-[10px] text-orange-400 font-bold mt-1">Non-conversion rate</p>
+            </div>
+            <div class="glass-card rounded-3xl p-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rời bỏ (Trả
+                        phí)</span>
+                    <div class="p-2 bg-red-50 text-red-500 rounded-lg"><i data-lucide="user-minus" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800" x-text="stats.paidChurn"></h3>
+                <p class="text-[10px] text-green-500 font-bold mt-1 flex items-center"><i data-lucide="trending-down"
+                        class="w-3 h-3 mr-1"></i> -0.2% Net improvement</p>
+            </div>
+        </div>
+
+        <!-- Plan Breakdown Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-in" style="animation-delay: 0.15s">
+            <template x-for="plan in planStats" :key="plan.name">
+                <div
+                    class="glass-card rounded-3xl p-6 relative overflow-hidden group hover:shadow-lg transition-all border border-slate-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            :class="`p-2 rounded-xl bg-${plan.color === 'blue' ? 'blue' : plan.color === 'indigo' ? 'indigo' : plan.color === 'emerald' ? 'emerald' : 'slate'}-50 text-${plan.color === 'blue' ? 'blue' : plan.color === 'indigo' ? 'indigo' : plan.color === 'emerald' ? 'emerald' : 'slate'}-600`">
+                            <i :data-lucide="plan.icon" class="w-4 h-4"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            x-text="plan.name"></span>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <h4 class="text-2xl font-black text-slate-800" x-text="plan.count.toLocaleString()"></h4>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-slate-400">Users</p>
+                            <p :class="`text-[10px] font-black text-${plan.color === 'blue' ? 'blue' : plan.color === 'indigo' ? 'indigo' : plan.color === 'emerald' ? 'emerald' : 'slate'}-500`"
+                                x-text="Math.round((plan.count / stats.totalSubscribers) * 100) + '%'"></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div :class="`h-full bg-${plan.color === 'blue' ? 'blue' : plan.color === 'indigo' ? 'indigo' : plan.color === 'emerald' ? 'emerald' : 'slate'}-500`"
+                            :style="`width: ${(plan.count / 5000) * 100}%`"></div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Chart: Subscribers Over Time -->
+            <div class="lg:col-span-2 space-y-6 stagger-in" style="animation-delay: 0.2s">
+                <div class="glass-card rounded-3xl p-8 shadow-sm">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-lg font-black text-slate-800">Tăng trưởng người dùng</h3>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Dữ liệu 6 tháng gần
+                                nhất</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span
+                                class="flex items-center text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded">
+                                <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span> Mới
+                            </span>
+                            <span
+                                class="flex items-center text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                                <span class="w-2 h-2 bg-slate-400 rounded-full mr-2"></span> Tổng
+                            </span>
+                        </div>
+                    </div>
+                    <div class="h-[350px]">
+                        <canvas id="subscriberChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- NEW: Plan Growth Time Chart -->
+                <div class="glass-card rounded-3xl p-8 shadow-sm">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-lg font-black text-slate-800">Biến động số lượng theo Gói</h3>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Phân tích xu hướng
+                                đăng ký gói cước</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center text-[9px] font-black text-blue-500 uppercase"><span
+                                    class="w-2 h-2 bg-blue-500 rounded-full mr-1.5"></span> Base</div>
+                            <div class="flex items-center text-[9px] font-black text-indigo-500 uppercase"><span
+                                    class="w-2 h-2 bg-indigo-500 rounded-full mr-1.5"></span> Mini</div>
+                            <div class="flex items-center text-[9px] font-black text-emerald-500 uppercase"><span
+                                    class="w-2 h-2 bg-emerald-500 rounded-full mr-1.5"></span> Smax</div>
+                        </div>
+                    </div>
+                    <div class="h-[350px]">
+                        <canvas id="planTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List: Expiring Soon -->
+            <div class="lg:col-span-1 space-y-6 stagger-in" style="animation-delay: 0.3s">
+                <div class="glass-card rounded-3xl p-8 shadow-sm h-full flex flex-col">
+                    <div class="mb-8">
+                        <h3 class="text-lg font-black text-slate-800">Sắp hết hạn</h3>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Action Required</p>
+                    </div>
+
+                    <!-- Filters inside Sidebar -->
+                    <div class="space-y-4 mb-6">
+                        <div class="relative">
+                            <i data-lucide="search"
+                                class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" x-model="searchQuery" placeholder="Tìm tên khách hàng..."
+                                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold outline-none focus:ring-2 focus:ring-blue-500/20 transition-all">
+                        </div>
+                        <select x-model="packageFilter"
+                            class="w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20">
+                            <option value="All">Tất cả gói cước</option>
+                            <option value="MINI CDP">MINI CDP</option>
+                            <option value="GÓI CƠ BẢN">GÓI CƠ BẢN</option>
+                            <option value="CDP SMAXAPP 1">CDP SMAXAPP 1</option>
+                        </select>
+                    </div>
+
+                    <div class="flex-grow space-y-3 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                        <template x-for="item in getFilteredExpiring()" :key="item.id">
+                            <div
+                                class="p-4 rounded-2xl border border-slate-50 hover:border-slate-200 transition-all bg-slate-50/50 group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500"
+                                            x-text="item.name.charAt(0)"></div>
+                                        <div>
+                                            <h4 class="text-xs font-black text-slate-800" x-text="item.name"></h4>
+                                            <p class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter"
+                                                x-text="item.package"></p>
+                                        </div>
+                                    </div>
+                                    <span :class="{
+                                        'bg-red-100 text-red-600': item.status === 'Critical',
+                                        'bg-orange-100 text-orange-600': item.status === 'Warning' || item.status === 'Danger',
+                                        'bg-blue-100 text-blue-600': item.status === 'Normal'
+                                    }" class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest"
+                                        x-text="item.status"></span>
+                                </div>
+                                <div class="flex items-center justify-between text-[9px] font-bold text-slate-400">
+                                    <span>Hết hạn: <span class="text-slate-600"
+                                            x-text="new Date(item.expiry).toLocaleDateString('vi-VN')"></span></span>
+                                    <button class="text-blue-600 hover:underline">Nhắc nhở</button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="getFilteredExpiring().length === 0">
+                            <div class="py-10 text-center opacity-50">
+                                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                <p class="text-[10px] font-black uppercase tracking-widest">Không có dữ liệu</p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <button
+                        class="w-full mt-6 py-3 bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all">
+                        Xem tất cả (254)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-7xl mx-auto py-12 px-6 border-t border-slate-100 text-center">
+        <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">SMAX AI Admin Dashboard &copy; 2026
+        </p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Chart.js implementation
+        const ctx = document.getElementById('subscriberChart').getContext('2d');
+        const subscriberChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12', 'Tháng 1', 'Tháng 2'],
+                datasets: [
+                    {
+                        label: 'Người dùng mới',
+                        data: [420, 580, 490, 850, 920, 1100],
+                        borderColor: '#2563eb', // Blue 600
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#2563eb',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Tổng người dùng',
+                        data: [8500, 9080, 9570, 10420, 11340, 12543],
+                        borderColor: '#94a3b8', // Slate 400
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            display: true,
+                            color: '#f1f5f9'
+                        },
+                        ticks: {
+                            font: {
+                                size: 10,
+                                weight: 'bold'
+                            },
+                            color: '#94a3b8'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 10,
+                                weight: 'bold'
+                            },
+                            color: '#94a3b8'
+                        }
+                    }
+                }
+            }
+        });
+
+        // NEW: Plan Distribution Chart over Time
+        const planCtx = document.getElementById('planTimeChart').getContext('2d');
+        new Chart(planCtx, {
+            type: 'line',
+            data: {
+                labels: ['Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12', 'Tháng 1', 'Tháng 2'],
+                datasets: [
+                    {
+                        label: 'Gói Cơ Bản',
+                        data: [2100, 2400, 2600, 2900, 3100, 3420],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Mini CDP',
+                        data: [1500, 2100, 2800, 3400, 3800, 4210],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'CDP SmaxApp 1',
+                        data: [200, 350, 480, 620, 750, 852],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, weight: 'bold' }, color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#94a3b8' } }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

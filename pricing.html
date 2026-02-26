@@ -99,10 +99,48 @@
             </div>
 
             <!-- CTA Actions -->
-            <div class="flex items-center space-x-6">
-                <a href="#" class="text-sm font-bold text-slate-600 hover:text-black transition-colors">Log in</a>
+            <div class="flex items-center space-x-6" x-data="{ userMenuOpen: false }">
+                <div class="relative">
+                    <button @click="userMenuOpen = !userMenuOpen" @click.away="userMenuOpen = false"
+                        class="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                        <img src="https://i.pravatar.cc/100?u=antigravity" alt="Avatar">
+                    </button>
+
+                    <!-- User Dropdown -->
+                    <div x-show="userMenuOpen" x-cloak x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        class="absolute right-0 mt-2 w-56 origin-top-right rounded-xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none z-[100] text-slate-800 py-2 text-left">
+                        <div class="px-4 py-3 border-b border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tài khoản</p>
+                            <p class="text-xs font-black text-slate-800">Antigravity AI</p>
+                        </div>
+                        <div class="py-1">
+                            <a href="#"
+                                class="flex items-center px-4 py-2 text-[10px] font-black hover:bg-slate-50 transition-colors uppercase tracking-widest text-slate-600">
+                                <i data-lucide="user" class="w-3.5 h-3.5 mr-3 text-slate-400"></i>
+                                Thông tin người dùng
+                            </a>
+                            <a href="admin.html"
+                                class="flex items-center px-4 py-2 text-[10px] font-black hover:bg-slate-50 transition-colors text-blue-600 uppercase tracking-widest">
+                                <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 mr-3 text-blue-500"></i>
+                                Quản trị
+                            </a>
+                        </div>
+                        <div class="border-t border-slate-100 mt-1 pt-1">
+                            <a href="#"
+                                class="flex items-center px-4 py-2 text-[10px] font-black text-red-500 hover:bg-red-50 transition-colors uppercase tracking-widest">
+                                <i data-lucide="log-out" class="w-3.5 h-3.5 mr-3"></i>
+                                Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <button
-                    class="px-6 py-2.5 bg-black text-white text-sm font-black rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-black/10">
+                    class="hidden md:block px-6 py-2.5 bg-black text-white text-[10px] font-black rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-black/10 uppercase tracking-widest">
                     Start free trial
                 </button>
             </div>
