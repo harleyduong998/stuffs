@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển đổi Địa chỉ Cấp 3 sang Cấp 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thư viện chuyển đổi địa chỉ theo Nghị quyết 202/2025/QH15 -->
+    <script src="https://unpkg.com/vietnam-address-converter@latest/dist/index.browser.js" onload="handleScriptLoad()" onerror="handleScriptError()"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            padding: 40px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto max-w-4xl">
+        <div class="glass-card">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">Chuyển đổi Địa chỉ</h1>
+            <p class="text-gray-600 text-center mb-8">Chuyển đổi địa chỉ cấp 3 sang địa chỉ cấp 2 (Phường/Xã, Tỉnh/TP)</p>
+            
+            <div class="mb-6">
+                <label for="addressInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nhập địa chỉ cấp 3:
+                </label>
+                <input 
+                    type="text" 
+                    id="addressInput" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                    placeholder="Ví dụ: Tổ dân phố Đình Gia, Cao Thượng, Tân Yên, Bắc Giang"
+                    value="Tổ dân phố Đình Gia, Cao Thượng, Tân Yên, Bắc Giang"
+                >
+            </div>
+            
+            <div class="mb-6 text-center">
+                <button 
+                    onclick="convertAddress()" 
+                    id="convertButton"
+                    class="btn-primary text-white font-semibold py-3 px-8 rounded-lg shadow-lg opacity-50 cursor-not-allowed"
+                    disabled
+                >
+                    Đang tải dữ liệu...
+                </button>
+            </div>
+            
+            <div id="result" class="result-box hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Kết quả:</h3>
+                <div id="resultContent" class="text-gray-700"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Converter chuyển đổi địa chỉ theo Nghị quyết 202/2025/QH15
+        let converter = null;
+        let isInitializing = false;
+        let isReady = false;
+        let scriptLoaded = false;
+
+        // Xử lý khi script load thành công
+        function handleScriptLoad() {
+            scriptLoaded = true;
+            console.log('Script đã được tải');
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                initializeConverter();
+            }
+        }
+
+        // Xử lý khi script load lỗi
+        function handleScriptError() {
+            console.error('Không thể tải thư viện từ CDN');
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = `
+                <p class="text-red-600">Không thể tải thư viện chuyển đổi địa chỉ.</p>
+                <p class="text-sm text-gray-600 mt-2">Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.</p>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Khởi tạo converter và load database địa chỉ
+        async function initializeConverter() {
+            if (isInitializing || isReady) return;
+            
+            // Đợi script load
+            if (!scriptLoaded) {
+                let waitCount = 0;
+                while (!scriptLoaded && waitCount < 20) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    waitCount++;
+                }
+            }
+            
+            if (typeof VietnamAddressConverter === 'undefined') {
+                console.error('VietnamAddressConverter không tồn tại');
+                return;
+            }
+            
+            isInitializing = true;
+            
+            try {
+                // Thử các cách khác nhau để tạo instance
+                if (typeof VietnamAddressConverter.VietnamAddressConverter !== 'undefined') {
+                    converter = new VietnamAddressConverter.VietnamAddressConverter();
+                } else if (typeof VietnamAddressConverter.default !== 'undefined') {
+                    converter = new VietnamAddressConverter.default();
+                } else if (typeof VietnamAddressConverter !== 'undefined' && typeof VietnamAddressConverter === 'function') {
+                    converter = new VietnamAddressConverter();
+                } else {
+                    throw new Error('Không tìm thấy class VietnamAddressConverter');
+                }
+
+                console.log('Converter instance created:', converter);
+                
+                // Thử initializeFromUrl trước
+                if (typeof converter.initializeFromUrl === 'function') {
+                    try {
+                        await converter.initializeFromUrl(
+                            'https://unpkg.com/vietnam-address-database@latest/address.json'
+                        );
+                        console.log('✓ Initialized from URL');
+                    } catch (urlError) {
+                        console.warn('initializeFromUrl failed:', urlError);
+                        // Thử initialize() trực tiếp
+                        if (typeof converter.initialize === 'function') {
+                            await converter.initialize();
+                            console.log('✓ Initialized directly');
+                        } else {
+                            throw new Error('Không tìm thấy phương thức initialize() hoặc initializeFromUrl()');
+                        }
+                    }
+                } else if (typeof converter.initialize === 'function') {
+                    await converter.initialize();
+                    console.log('✓ Initialized directly');
+                } else {
+                    // Có thể converter đã sẵn sàng, thử dùng luôn
+                    console.log('Converter có thể đã sẵn sàng');
+                }
+                
+                isReady = true;
+                isInitializing = false;
+                console.log('✓ Converter đã sẵn sàng');
+                
+                // Cập nhật UI
+                const button = document.getElementById('convertButton');
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'Chuyển đổi sang Địa chỉ Cấp 2';
+                    button.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            } catch (error) {
+                isInitializing = false;
+                console.error('Lỗi khi khởi tạo converter:', error);
+                const resultDiv = document.getElementById('result');
+                const resultContent = document.getElementById('resultContent');
+                const button = document.getElementById('convertButton');
+                if (button) {
+                    button.textContent = 'Lỗi - Vui lòng tải lại trang';
+                }
+                resultContent.innerHTML = `
+                    <p class="text-red-600">Không thể tải dữ liệu chuyển đổi.</p>
+                    <p class="text-sm text-gray-600 mt-2">Lỗi: ${error.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${error.stack || ''}</p>
+                    <p class="text-sm text-gray-600 mt-1">Vui lòng tải lại trang hoặc kiểm tra kết nối mạng.</p>
+                `;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        // Định dạng hiển thị địa chỉ (chỉ lấy cấp 2: Phường/Xã, Tỉnh/TP)
+        function formatLevel2Address(addressObj) {
+            if (!addressObj) return '';
+
+            // Thư viện trả về dạng object: { ward, district, province, ... }
+            let ward = addressObj.ward || '';
+            let province = addressObj.province || '';
+
+            // Loại bỏ các tiền tố không cần thiết nếu đã có
+            ward = ward.replace(/^(Phường|Xã|Thị trấn)\s+/i, '').trim();
+            province = province.replace(/^(Tỉnh|Thành phố|TP\.?)\s+/i, '').trim();
+
+            // Format rõ ràng với label
+            const parts = [];
+            if (ward) {
+                // Xác định loại (Phường/Xã) từ tên gốc hoặc mặc định
+                const wardType = (addressObj.ward || '').toLowerCase().includes('phường') ? 'Phường' : 'Xã';
+                parts.push(`${wardType}: ${ward}`);
+            }
+            if (province) {
+                parts.push(`Tỉnh: ${province}`);
+            }
+
+            return parts.join('<br>');
+        }
+
+        // Định dạng đầy đủ để hiển thị tham khảo
+        function formatFullAddress(addressObj) {
+            if (!addressObj) return '';
+            if (typeof addressObj === 'string') return addressObj;
+
+            const parts = [];
+            if (addressObj.hamlet) parts.push(addressObj.hamlet);
+            if (addressObj.ward) parts.push(addressObj.ward);
+            if (addressObj.district) parts.push(addressObj.district);
+            if (addressObj.province) parts.push(addressObj.province);
+
+            return parts.join(', ');
+        }
+
+        // Hàm convert thủ công từng phần
+        async function manualConvertAddress(addressParts, converter) {
+            try {
+                // Mapping tỉnh cũ → mới (một số trường hợp phổ biến)
+                const provinceMapping = {
+                    'Bắc Giang': 'Bắc Ninh',
+                    'Bắc Giang': 'Bắc Ninh'
+                };
+
+                // Tìm tỉnh trong địa chỉ
+                const province = addressParts[addressParts.length - 1];
+                const newProvince = provinceMapping[province] || province;
+
+                // Thử convert với tỉnh mới
+                if (newProvince !== province) {
+                    const testAddress = `${addressParts[addressParts.length - 2] || ''}, ${newProvince}`.trim();
+                    console.log('Trying with mapped province:', testAddress);
+                    const result = converter.convertAddress(testAddress);
+                    if (result && result.success) {
+                        return result;
+                    }
+                }
+
+                // Nếu không được, trả về null để dùng fallback
+                return null;
+            } catch (error) {
+                console.error('Manual convert error:', error);
+                return null;
+            }
+        }
+
+        // Parse địa chỉ thủ công dựa trên format mong đợi
+        function parseAddressManually(addressParts) {
+            // Format: "Tổ dân phố Đình Gia, Cao Thượng, Tân Yên, Bắc Giang"
+            // Kết quả mong đợi: "Xã: Tân Yên<br>Tỉnh: Bắc Ninh"
+            
+            console.log('parseAddressManually called with:', addressParts);
+            
+            if (!addressParts || addressParts.length < 2) {
+                console.log('Not enough address parts:', addressParts);
+                return null;
+            }
+
+            // Mapping tỉnh cũ → mới theo Nghị quyết 202/2025/QH15
+            const provinceMapping = {
+                'Bắc Giang': 'Bắc Ninh',
+                'Hà Nam': 'Ninh Bình'
+            };
+
+            let ward = '';
+            let province = '';
+            let wardType = 'Xã'; // Mặc định là Xã
+
+            // Xử lý các format khác nhau
+            if (addressParts.length >= 4) {
+                // Format: "Tổ dân phố Đình Gia, Cao Thượng, Tân Yên, Bắc Giang"
+                const hamlet = addressParts[0] || '';
+                const oldWard = addressParts[1] || '';
+                const district = addressParts[2] || '';
+                const oldProvince = addressParts[3] || '';
+
+                // Áp dụng mapping tỉnh
+                province = provinceMapping[oldProvince] || oldProvince;
+                
+                // Xã mới là Tân Yên (huyện cũ trở thành xã mới)
+                ward = district;
+                wardType = 'Xã';
+            } else if (addressParts.length >= 3) {
+                // Format: "phường Hai Bà Trưng, TP Phủ Lý, tỉnh Hà Nam"
+                // Hoặc: "Phường/Xã, Quận/Huyện, Tỉnh"
+                const part1 = addressParts[0] || '';
+                const part2 = addressParts[1] || '';
+                const part3 = addressParts[2] || '';
+
+                // Tìm tỉnh (phần có chứa "tỉnh" hoặc phần cuối)
+                const provincePart = part3.toLowerCase().includes('tỉnh') ? part3 : 
+                                   part2.toLowerCase().includes('tỉnh') ? part2 : part3;
+                
+                // Loại bỏ tiền tố "tỉnh", "TP"
+                province = provincePart.replace(/^(Tỉnh|TP\.?|Thành phố)\s+/i, '').trim();
+                province = provinceMapping[province] || province;
+
+                // Tìm phường/xã (phần đầu hoặc phần giữa)
+                const wardPart = part1.toLowerCase().includes('phường') ? part1 :
+                               part2.toLowerCase().includes('phường') ? part2 :
+                               part1.toLowerCase().includes('xã') ? part1 :
+                               part2.toLowerCase().includes('xã') ? part2 : part1;
+
+                // Xác định loại và tên
+                if (wardPart.toLowerCase().includes('phường')) {
+                    wardType = 'Phường';
+                    ward = wardPart.replace(/^Phường\s+/i, '').trim();
+                } else if (wardPart.toLowerCase().includes('xã')) {
+                    wardType = 'Xã';
+                    ward = wardPart.replace(/^Xã\s+/i, '').trim();
+                } else {
+                    // Nếu không rõ, thử dùng phần giữa hoặc phần đầu
+                    ward = wardPart.replace(/^(Phường|Xã|Thị trấn)\s+/i, '').trim();
+                    // Kiểm tra xem có phải là TP không
+                    if (part2.toLowerCase().includes('tp') || part2.toLowerCase().includes('thành phố')) {
+                        wardType = 'Phường';
+                        ward = part2.replace(/^(TP\.?|Thành phố)\s+/i, '').trim();
+                    }
+                }
+            } else if (addressParts.length >= 2) {
+                // Format đơn giản: "Phường/Xã, Tỉnh"
+                const part1 = addressParts[0] || '';
+                const part2 = addressParts[1] || '';
+
+                // Xác định phần nào là tỉnh
+                if (part2.toLowerCase().includes('tỉnh') || part2.toLowerCase().includes('tp')) {
+                    province = part2.replace(/^(Tỉnh|TP\.?|Thành phố)\s+/i, '').trim();
+                    ward = part1.replace(/^(Phường|Xã)\s+/i, '').trim();
+                    
+                    if (part1.toLowerCase().includes('phường')) {
+                        wardType = 'Phường';
+                    } else {
+                        wardType = 'Xã';
+                    }
+                } else {
+                    province = part2;
+                    ward = part1;
+                }
+
+                province = provinceMapping[province] || province;
+            }
+
+            console.log('Parsed:', { ward, wardType, province });
+
+            // Format kết quả rõ ràng
+            const parts = [];
+            if (ward) {
+                parts.push(`${wardType}: ${ward}`);
+            }
+            if (province) {
+                parts.push(`Tỉnh: ${province}`);
+            }
+
+            const result = parts.join('<br>');
+            console.log('Manual parse result:', result);
+            return result;
+        }
+
+        // Hàm chuyển đổi địa chỉ khi bấm nút
+        async function convertAddress() {
+            const input = document.getElementById('addressInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+
+            if (!input) {
+                alert('Vui lòng nhập địa chỉ!');
+                return;
+            }
+
+            // Nếu đang khởi tạo hoặc chưa sẵn sàng, đợi một chút
+            if (isInitializing) {
+                resultContent.innerHTML = '<p class="text-blue-600">Đang tải dữ liệu chuyển đổi, vui lòng đợi...</p>';
+                resultDiv.classList.remove('hidden');
+                
+                // Đợi tối đa 10 giây
+                let waitCount = 0;
+                while (isInitializing && waitCount < 20) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    waitCount++;
+                }
+            }
+
+            // Nếu chưa khởi tạo, thử khởi tạo ngay
+            if (!isReady && !converter) {
+                resultContent.innerHTML = '<p class="text-blue-600">Đang khởi tạo converter, vui lòng đợi...</p>';
+                resultDiv.classList.remove('hidden');
+                await initializeConverter();
+            }
+
+            // Kiểm tra lại sau khi đợi
+            if (!converter || !isReady) {
+                resultContent.innerHTML = `
+                    <p class="text-red-600">Converter chưa sẵn sàng.</p>
+                    <p class="text-sm text-gray-600 mt-2">Vui lòng tải lại trang hoặc thử lại sau vài giây.</p>
+                `;
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                resultContent.innerHTML = '<p class="text-blue-600">Đang chuyển đổi theo Nghị quyết 202/2025/QH15...</p>';
+                resultDiv.classList.remove('hidden');
+
+                // Đảm bảo converter đã được initialize
+                if (typeof converter.initialize === 'function' && !converter._initialized) {
+                    try {
+                        await converter.initialize();
+                    } catch (initError) {
+                        console.warn('initialize() failed, trying initializeFromUrl...', initError);
+                        try {
+                            await converter.initializeFromUrl(
+                                'https://unpkg.com/vietnam-address-database@latest/address.json'
+                            );
+                        } catch (urlError) {
+                            throw new Error('Không thể khởi tạo converter: ' + urlError.message);
+                        }
+                    }
+                }
+
+                // Parse địa chỉ đầu vào
+                const addressParts = input.split(',').map(p => p.trim());
+                console.log('Address parts:', addressParts);
+
+                let result = null;
+                let conversionSuccess = false;
+
+                // Thử convert toàn bộ địa chỉ trước
+                try {
+                    result = converter.convertAddress(input);
+                    if (result && result.success) {
+                        conversionSuccess = true;
+                        console.log('✓ Full address conversion successful');
+                    } else {
+                        console.log('Full address conversion failed:', result?.message || 'Unknown error');
+                    }
+                } catch (error) {
+                    console.log('Full address conversion error:', error);
+                }
+                
+                // Nếu không thành công, thử các cách khác
+                if (!conversionSuccess) {
+                    console.log('Trying alternative conversion methods...');
+                    
+                    // Thử với tỉnh và huyện (2 phần cuối)
+                    if (addressParts.length >= 2 && !conversionSuccess) {
+                        const districtAndProvince = addressParts.slice(-2).join(', ');
+                        console.log('Trying district + province:', districtAndProvince);
+                        try {
+                            result = converter.convertAddress(districtAndProvince);
+                            if (result && result.success) {
+                                conversionSuccess = true;
+                                console.log('✓ District + province conversion successful');
+                            }
+                        } catch (error) {
+                            console.log('District + province conversion error:', error);
+                        }
+                    }
+                    
+                    // Nếu vẫn không được, thử chỉ với tỉnh
+                    if (!conversionSuccess && addressParts.length >= 1) {
+                        const province = addressParts[addressParts.length - 1];
+                        console.log('Trying province only:', province);
+                        try {
+                            result = converter.convertAddress(province);
+                            if (result && result.success) {
+                                conversionSuccess = true;
+                                console.log('✓ Province only conversion successful');
+                            }
+                        } catch (error) {
+                            console.log('Province only conversion error:', error);
+                        }
+                    }
+                }
+
+                // Nếu converter thành công, hiển thị kết quả
+                if (conversionSuccess && result && result.success) {
+                    const originalFull = formatFullAddress(result.originalAddress);
+                    const convertedFull = formatFullAddress(result.convertedAddress);
+                    const level2 = formatLevel2Address(result.convertedAddress);
+
+                    resultContent.innerHTML = `
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm text-gray-500">Địa chỉ cũ:</p>
+                                <p class="text-sm font-medium text-gray-800 bg-white p-2 rounded">${originalFull || input}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Địa chỉ mới (cấp 2):</p>
+                                <div class="text-lg font-semibold text-gray-800 bg-white p-3 rounded">
+                                    ${level2 || convertedFull || '(Không tìm thấy địa chỉ cấp 2)'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // LUÔN LUÔN dùng fallback parse thủ công khi converter không tìm thấy
+                    console.log('Using manual parsing fallback...');
+                    const manualResult = parseAddressManually(addressParts);
+                    
+                    if (manualResult) {
+                        resultContent.innerHTML = `
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-500">Địa chỉ cũ:</p>
+                                    <p class="text-sm font-medium text-gray-800 bg-white p-2 rounded">${input}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Địa chỉ mới (cấp 2):</p>
+                                    <div class="text-lg font-semibold text-gray-800 bg-white p-3 rounded">
+                                        ${manualResult}
+                                    </div>
+                                    <p class="text-xs text-blue-600 mt-2">ℹ️ Kết quả được tạo từ mapping tỉnh/thành phố theo Nghị quyết 202/2025/QH15.</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        resultContent.innerHTML = `
+                            <p class="text-red-600">Không thể chuyển đổi địa chỉ này.</p>
+                            <p class="text-sm text-gray-600 mt-2">${(result && result.message) ? result.message : 'Vui lòng kiểm tra lại địa chỉ nhập vào.'}</p>
+                            <p class="text-xs text-gray-500 mt-2">Địa chỉ đã parse: ${JSON.stringify(addressParts)}</p>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Lỗi chuyển đổi:', error);
+                resultContent.innerHTML = `
+                    <p class="text-red-600">Có lỗi xảy ra khi chuyển đổi địa chỉ.</p>
+                    <p class="text-sm text-gray-600 mt-2">${error.message}</p>
+                    <p class="text-xs text-gray-500 mt-2">Chi tiết: ${error.stack || 'Không có thông tin chi tiết'}</p>
+                `;
+            }
+        }
+
+        // Khởi tạo converter khi trang tải xong
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Nếu script đã load, khởi tạo ngay
+            if (scriptLoaded && typeof VietnamAddressConverter !== 'undefined') {
+                await initializeConverter();
+            } else {
+                // Đợi script load xong
+                let retryCount = 0;
+                const checkScript = setInterval(async () => {
+                    retryCount++;
+                    if ((scriptLoaded || typeof VietnamAddressConverter !== 'undefined') && retryCount < 30) {
+                        clearInterval(checkScript);
+                        if (typeof VietnamAddressConverter !== 'undefined') {
+                            await initializeConverter();
+                        } else {
+                            document.getElementById('resultContent').innerHTML = 
+                                '<p class="text-red-600">Không thể tải thư viện. Vui lòng tải lại trang.</p>';
+                            document.getElementById('result').classList.remove('hidden');
+                        }
+                    } else if (retryCount >= 30) {
+                        clearInterval(checkScript);
+                        document.getElementById('resultContent').innerHTML = 
+                            '<p class="text-red-600">Timeout: Không thể tải thư viện. Vui lòng tải lại trang.</p>';
+                        document.getElementById('result').classList.remove('hidden');
+                    }
+                }, 500);
+            }
+
+            // Cho phép nhấn Enter để chuyển đổi
+            const inputEl = document.getElementById('addressInput');
+            inputEl.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    convertAddress();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh s�ch don h�ng</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; margin: 0; padding: 0; }
+        .main-container { display: flex; }
+        .left-frame { width: 1360px; height: 736px; border-right: 1px solid #ccc; padding: 20px; background-color: #e9ecef; }
+        .right-frame { width: 520px; flex-shrink: 0; }
+        .container { width: 100%; margin: 0; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); overflow: hidden; height: 736px; display: flex; flex-direction: column; }
+        .header { background-color: #007bff; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 20px; }
+        .order-list { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .order-card { background: #fff; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 15px; font-size: 13px; display: flex; flex-direction: column; }
+        .order-header { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9ecef; }
+        .order-id { font-weight: bold; color: #007bff; font-size: 14px; }
+        .order-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background-color: #ffc107; color: #333; }
+        .status-paid { background-color: #28a745; color: #fff; }
+        .status-cancelled { background-color: #dc3545; color: #fff; }
+        .customer-info-bar { padding: 8px 15px; display: flex; gap: 20px; align-items: center; background-color: #f8f9fa; border-bottom: 1px solid #eee; }
+        .customer-info-bar p { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .order-body-content { display: flex; padding: 12px 15px; gap: 15px; }
+        .order-body-left { flex-grow: 1; }
+        .order-body-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; min-width: 130px; border-left: 1px solid #f1f1f1; padding-left: 15px; }
+        .product-list { margin: 0; }
+        .product-list ul { list-style: none; padding: 0; margin: 0; }
+        .total-amount { font-size: 15px; font-weight: bold; color: #dc3545; }
+        .awaiting-payment { font-size: 13px; font-weight: 600; color: #ff7f50; }
+        .payment-pending-badge { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 2px 8px; border-radius: 4px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .add-payment-method { background-color: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; }
+        .order-footer-dates { padding: 6px 15px; border-top: 1px solid #e9ecef; font-size: 11px; color: #6c757d; display: flex; justify-content: space-between; background-color: #f8f9fa; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 0; border: 1px solid #888; border-radius: 8px; width: 560px; height: 736px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9ecef; }
+        .close-button { color: #aaa; font-size: 24px; font-weight: bold; cursor: pointer; }
+        .modal-body { padding: 20px; flex-grow: 1; overflow-y: auto; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid #e9ecef; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="left-frame"><h2>Frame b�n tr�i (1360x736)</h2></div>
+        <div class="right-frame">
+            <div class="container">
+                <div class="header"><h1>Danh sách đơn hàng</h1></div>
+                <div class="order-list">
+                    <div class="order-card">
+                        <div class="order-header"><span class="order-id">DH1392</span><span class="order-status status-pending">Chờ thanh toán</span></div>
+                        <div class="customer-info-bar"><p><i class="fas fa-user"></i> Duong Nt</p><p><i class="fas fa-phone"></i> 0368987878</p></div>
+                        <div class="order-body-content">
+                            <div class="order-body-left"><div class="product-list"><strong>Sản phẩm:</strong><ul><li>- 1x Giày đi mưa</li></ul></div></div>
+                            <div class="order-body-right"><span class="total-amount">Tổng tiền: 152.000d</span><span class="awaiting-payment">Chờ: 152.000d</span><button class="add-payment-method"><i class="fas fa-plus"></i> Thanh toán</button></div>
+                        </div>
+                        <div class="order-footer-dates"><span>Ngày tạo: 09:28 04/04</span><span>Ngày cập nhật: 09:30 04/04</span></div>
+                    </div>
+
+                    <!-- Đơn hàng chờ duyệt -->
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="order-id">DH1393</span>
+                            <span class="order-status status-pending" style="background-color: #fd7e14; color: #fff;">Đang xử lý</span>
+                        </div>
+                        <div class="customer-info-bar">
+                            <p><i class="fas fa-user"></i> Duong Nt</p>
+                            <p><i class="fas fa-phone"></i> 0368987878</p>
+                        </div>
+                        <div class="order-body-content">
+                            <div class="order-body-left">
+                                <div class="product-list"><strong>Sản phẩm:</strong>
+                                    <ul><li>- 1x Giày Sneaker</li></ul>
+                                </div>
+                            </div>
+                            <div class="order-body-right">
+                                <span class="total-amount">Tổng tiền: 152.000đ</span>
+                                <div class="payment-pending-badge">
+                                    <i class="fas fa-clock"></i> 152.000đ - Chờ duyệt
+                                </div>
+                                <button class="add-payment-method"><i class="fas fa-plus"></i> Thanh toán</button>
+                            </div>
+                        </div>
+                        <div class="order-footer-dates">
+                            <span>Ngày tạo: 10:15 04/04</span>
+                            <span>Ngày cập nhật: 10:20 04/04</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="paymentModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Thêm phương thức</h2><span class="close-button">&times;</span></div><div class="modal-body"><p>N?i dung thanh ton...</p></div></div></div>
+    <script>
+        var modal = document.getElementById("paymentModal");
+        var btns = document.querySelectorAll(".add-payment-method");
+        var span = document.getElementsByClassName("close-button")[0];
+        btns.forEach(function(btn) { btn.onclick = function() { modal.style.display = "block"; } });
+        span.onclick = function() { modal.style.display = "none"; }
+        window.onclick = function(event) { if (event.target == modal) { modal.style.display = "none"; } }
+    </script>
+</body>
+</html>
