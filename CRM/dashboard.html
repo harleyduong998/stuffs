@@ -1,0 +1,40 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Dashboards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900"><i class="fas fa-chart-line mr-2"></i>Danh sách Dashboard</h1>
+            <a href="report_builder.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i>Tạo Dashboard mới
+            </a>
+        </header>
+        <main class="grid gap-4">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow">
+                <div class="dashboard-info">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-1">Kinh doanh tháng 4</h3>
+                    <p class="text-gray-500 text-sm"><i class="far fa-file-alt mr-1"></i> 8 Báo cáo | <i class="fas fa-database mr-1"></i> 12 Metrics</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors">Xem</button>
+                    <a href="report_builder.html" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors">Sửa</a>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow">
+                <div class="dashboard-info">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-1">Marketing Performance</h3>
+                    <p class="text-gray-500 text-sm"><i class="far fa-file-alt mr-1"></i> 5 Báo cáo | <i class="fas fa-database mr-1"></i> 10 Metrics</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors">Xem</button>
+                    <a href="report_builder.html" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors">Sửa</a>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
