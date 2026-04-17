@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết phản hồi Form | Form Builder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 64px;
+            --sidebar-expanded-width: 256px;
+            --primary-color: #1b3da1;
+            --bg-light: #f4f7fe;
+            --text-muted: #a3b1cc;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles (Simplified from form.html) */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-image: radial-gradient(80% 40% at 100% 0%, rgba(255, 255, 255, .2) 0%, transparent 100%),
+                              radial-gradient(60% 40% at 0% 100%, rgba(255, 255, 255, .1) 0%, transparent 100%),
+                              linear-gradient(160deg, #1b3da1, #0b2060);
+            display: flex;
+            flex-direction: column;
+            transition: width .3s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .sidebar.expanded {
+            width: var(--sidebar-expanded-width);
+        }
+
+        .sidebar__logo {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            height: 64px;
+        }
+
+        .sidebar__logo .logo {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-text {
+            margin-left: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .2s ease .1s;
+        }
+
+        .sidebar.expanded .sidebar-text {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar__items {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 0;
+        }
+
+        .item {
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .item-link {
+            display: flex;
+            align-items: center;
+            height: 44px;
+            padding: 0 8px;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: all .3s ease;
+            cursor: pointer;
+        }
+
+        .item-link:hover, .item.active .item-link {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .icon-wrapper {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar__footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn {
+            width: 100%;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            transition: margin-left .3s ease;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - var(--sidebar-width));
+            overflow-y: auto;
+        }
+
+        body.sidebar-expanded .main-content {
+            margin-left: var(--sidebar-expanded-width);
+            width: calc(100% - var(--sidebar-expanded-width));
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .btn-back {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .btn-back:hover {
+            color: var(--primary-color);
+        }
+
+        /* Excel-like Table Styles */
+        .excel-table-container {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e0e6ed;
+        }
+
+        .attr-map-indicator {
+            display: none;
+            background-color: #f8f9fc;
+            color: #1b3da1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 4px;
+            border: 1px dashed #1b3da1;
+            text-transform: uppercase;
+        }
+
+        .mapping-mode .attr-map-indicator {
+            display: inline-block;
+        }
+
+        .mapping-mode thead th:hover {
+            background-color: #eef2ff !important;
+            cursor: pointer;
+        }
+
+        .badge-customer {
+            background-color: #f8f9fc;
+            color: #1b3da1 !important;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .table-responsive {
+            overflow: auto;
+            height: 100%;
+        }
+
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .excel-table thead th {
+            background-color: #f8f9fc;
+            color: #5a5c69;
+            font-weight: 600;
+            padding: 12px 15px;
+            border: 1px solid #e3e6f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .excel-table tbody td {
+            padding: 10px 15px;
+            border: 1px solid #e3e6f0;
+            color: #4e73df;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .excel-table tbody tr:nth-of-type(even) {
+            background-color: #fcfcfd;
+        }
+
+        .excel-table tbody tr:hover {
+            background-color: #f1f4ff;
+        }
+
+        /* Specific Column Styles */
+        .col-stt { width: 50px; text-align: center !important; color: #6e707e !important; }
+        .col-time { width: 160px; }
+        .col-creator { width: 140px; }
+        .col-customer { width: 180px; font-weight: 600; }
+        .col-answer { min-width: 150px; color: #5a5c69 !important; }
+
+        .search-row {
+            padding: 15px;
+            background: #fff;
+            border-bottom: 1px solid #e0e6ed;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-input-group {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-input-group i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+        }
+
+        .search-input-group input {
+            padding-left: 35px;
+            border-radius: 8px;
+            height: 38px;
+            font-size: 14px;
+        }
+
+        .btn-export {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-import {
+            background-color: #fff;
+            color: #28a745;
+            border: 1px solid #28a745;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-import:hover {
+            background-color: #f0fff4;
+            color: #218838;
+        }
+
+        .btn-mapping {
+            background-color: #fff;
+            color: #1b3da1;
+            border: 1px solid #1b3da1;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-mapping:hover {
+            background-color: #f0f7ff;
+            color: #0d2a80;
+        }
+
+        /* Modern Editable Cell Styles */
+        .editable-cell {
+            position: relative;
+            cursor: default; /* Changed from cell to default since we need explicit click on Edit button now */
+            transition: all 0.15s ease;
+        }
+
+        .editable-cell.editing-mode {
+            background-color: #fff !important;
+            box-shadow: inset 0 0 0 2px #1b3da1;
+            z-index: 2;
+        }
+
+        .editable-cell .cell-text {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .editable-cell input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #1b3da1;
+            padding: 10px 15px;
+            font-size: 13px;
+            outline: none;
+            background: #fff;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .row-editing {
+            background-color: #fffbdd !important; /* Visual indicator for row being edited */
+        }
+    </style>
+    </style>
+</head>
+<body class="sidebar-expanded">
+
+    <!-- Sidebar (Consistent with main page) -->
+    <div class="sidebar expanded" id="sidebar">
+        <div class="sidebar__logo">
+            <div class="logo"><img src="http://app.vn/assets/images/app-automation.svg" width="24" alt=""></div>
+            <span class="sidebar-text">Form Builder</span>
+        </div>
+        <div class="sidebar__items">
+            <div class="item active">
+                <a href="form.html" class="item-link">
+                    <div class="icon-wrapper"><i class="fas fa-list"></i></div>
+                    <span class="sidebar-text">Danh sách form</span>
+                </a>
+            </div>
+            <div class="item">
+                <a href="form.html" class="item-link">
+                    <div class="icon-wrapper"><i class="fas fa-th-large"></i></div>
+                    <span class="sidebar-text">Template</span>
+                </a>
+            </div>
+        </div>
+        <div class="sidebar__footer">
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <i class="fas fa-angle-double-left" id="toggle-icon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <a href="form.html" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+        
+        <div class="content-header">
+            <div>
+                <h3 id="formTitle">Phản hồi: Đăng ký nhận tin</h3>
+                <p class="text-muted small">Chi tiết các câu trả lời của khách hàng (Form ID: 10293)</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-import" onclick="document.getElementById('excelFileInput').click()">
+                    <i class="fas fa-file-import"></i> Nhập Excel
+                </button>
+                <input type="file" id="excelFileInput" style="display: none;" accept=".xlsx, .xls, .csv">
+                <button class="btn btn-export">
+                    <i class="fas fa-file-excel"></i> Xuất Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="excel-table-container">
+            <div class="search-row">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" placeholder="Tìm kiếm tên, SĐT khách hàng">
+                </div>
+                <div class="text-muted small ms-auto">Đang hiển thị 1-3 trên 3 phản hồi</div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="excel-table">
+                    <thead>
+                        <tr>
+                            <th class="col-stt">STT</th>
+                            <th class="col-time">Thời gian tạo</th>
+                            <th class="col-creator">Người tạo</th>
+                            <th class="col-customer">Customer</th>
+                            <!-- DYNAMIC COLUMNS BASED ON FORM QUESTIONS -->
+                            <th class="col-answer">Họ và tên</th>
+                            <th class="col-answer">Số điện thoại</th>
+                            <th class="col-answer">Email</th>
+                            <th class="col-answer">Dịch vụ quan tâm</th>
+                            <th class="col-answer">Ghi chú</th>
+                            <th class="text-end" style="width: 100px; background-color: #f8f9fc;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="col-stt col-readonly">1</td>
+                            <td class="col-time col-readonly">15/04/2026 09:30:12</td>
+                            <td class="col-creator col-readonly">Trang DT</td>
+                            <td class="col-customer col-readonly"><span class="badge-customer">Khách hàng #882</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Nguyễn Hoàng Long</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">0901234567</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">long.nh@gmail.com</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Tư vấn thiết kế UI/UX</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Cần tư vấn gấp trong ngày mai</span></td>
+                            <td class="text-end col-readonly">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <button class="btn btn-sm btn-outline-primary border-0" onclick="enableRowEdit(this)" title="Sửa dòng này">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRow(this)" title="Xóa dòng này">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="col-stt col-readonly">2</td>
+                            <td class="col-time col-readonly">14/04/2026 14:22:05</td>
+                            <td class="col-creator col-readonly">Hệ thống</td>
+                            <td class="col-customer col-readonly"><span class="badge-customer">Khách hàng #841</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Phạm Minh Đức</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">0988776655</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">ducpm@outlook.com</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Phát triển ứng dụng Web</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">—</span></td>
+                            <td class="text-end col-readonly">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <button class="btn btn-sm btn-outline-primary border-0" onclick="enableRowEdit(this)" title="Sửa dòng này">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRow(this)" title="Xóa dòng này">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="col-stt col-readonly">3</td>
+                            <td class="col-time col-readonly">14/04/2026 10:15:44</td>
+                            <td class="col-creator col-readonly">Hệ thống</td>
+                            <td class="col-customer col-readonly"><span class="badge-customer">Khách hàng #839</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Trần Thị Mai Anh</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">0912334455</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">maianh.tran@yahoo.com</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Digital Marketing</span></td>
+                            <td class="col-answer editable-cell"><span class="cell-text">Muốn nhận tài liệu qua email</span></td>
+                            <td class="text-end col-readonly">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <button class="btn btn-sm btn-outline-primary border-0" onclick="enableRowEdit(this)" title="Sửa dòng này">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRow(this)" title="Xóa dòng này">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function enableRowEdit(btn) {
+            const row = btn.closest('tr');
+            
+            // If already editing, don't re-trigger
+            if (row.classList.contains('row-editing')) return;
+            
+            row.classList.add('row-editing');
+            
+            // Find all editable cells in this row
+            const editableCells = row.querySelectorAll('.editable-cell');
+            
+            // Update action buttons to Show "Save" and "Cancel"
+            const actionContainer = row.querySelector('.text-end .d-flex');
+            actionContainer.innerHTML = `
+                <button class="btn btn-sm btn-success border-0" onclick="saveRowEdit(this)" title="Lưu">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="btn btn-sm btn-secondary border-0" onclick="cancelRowEdit(this)" title="Hủy">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Transform all answer cells into inputs
+            editableCells.forEach(cell => {
+                const span = cell.querySelector('.cell-text');
+                const val = span.innerText;
+                cell.setAttribute('data-old-val', val); // Store old value for cancel
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = val === '—' ? '' : val;
+                
+                cell.innerHTML = '';
+                cell.appendChild(input);
+                cell.classList.add('editing-mode');
+            });
+        }
+
+        function saveRowEdit(btn) {
+            const row = btn.closest('tr');
+            const editableCells = row.querySelectorAll('.editable-cell');
+            
+            editableCells.forEach(cell => {
+                const input = cell.querySelector('input');
+                const newVal = input.value.trim() || '—';
+                cell.innerHTML = `<span class="cell-text">${newVal}</span>`;
+                cell.classList.remove('editing-mode');
+            });
+            
+            restoreActionButtons(row);
+            row.classList.remove('row-editing');
+        }
+
+        function cancelRowEdit(btn) {
+            const row = btn.closest('tr');
+            const editableCells = row.querySelectorAll('.editable-cell');
+            
+            editableCells.forEach(cell => {
+                const oldVal = cell.getAttribute('data-old-val');
+                cell.innerHTML = `<span class="cell-text">${oldVal}</span>`;
+                cell.classList.remove('editing-mode');
+            });
+            
+            restoreActionButtons(row);
+            row.classList.remove('row-editing');
+        }
+
+        function restoreActionButtons(row) {
+            const actionContainer = row.querySelector('.text-end .d-flex');
+            actionContainer.innerHTML = `
+                <button class="btn btn-sm btn-outline-primary border-0" onclick="enableRowEdit(this)" title="Sửa dòng này">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRow(this)" title="Xóa dòng này">
+                    <i class="far fa-trash-alt"></i>
+                </button>
+            `;
+        }
+
+        function deleteRow(btn) {
+            if (confirm('Bạn có chắc chắn muốn xóa phản hồi này?')) {
+                btn.closest('tr').remove();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const body = document.body;
+            
+            sidebar.classList.toggle('expanded');
+            body.classList.toggle('sidebar-expanded');
+
+            if (sidebar.classList.contains('expanded')) {
+                toggleIcon.classList.remove('fa-angle-double-right');
+                toggleIcon.classList.add('fa-angle-double-left');
+            } else {
+                toggleIcon.classList.remove('fa-angle-double-left');
+                toggleIcon.classList.add('fa-angle-double-right');
+            }
+        }
+    </script>
+</body>
+</html>

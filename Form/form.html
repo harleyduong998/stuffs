@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 64px;
+            --sidebar-expanded-width: 256px;
+            --primary-bg: #1b3da1;
+            --primary-gradient: linear-gradient(160deg, #1b3da1, #0b2060);
+            --text-muted: #bfdbfe;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles matching sidebar.html */
+        .sidebar {
+            position: fixed;
+            z-index: 1049;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--primary-bg);
+            background-image: radial-gradient(80% 40% at 100% 0%, rgba(255, 255, 255, .2) 0%, transparent 100%),
+                              radial-gradient(60% 40% at 0% 100%, rgba(255, 255, 255, .1) 0%, transparent 100%),
+                              var(--primary-gradient);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--primary-bg);
+            box-shadow: 0 0 20px #1b3da133;
+            transition: width .3s ease;
+        }
+
+        .sidebar.expanded {
+            width: var(--sidebar-expanded-width);
+        }
+
+        .sidebar__logo {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            height: 64px;
+        }
+
+        .sidebar__logo .logo {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-text {
+            margin-left: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .2s ease .1s;
+        }
+
+        .sidebar.expanded .sidebar-text {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar__items {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px 0;
+        }
+
+        .item {
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .item-link {
+            display: flex;
+            align-items: center;
+            height: 44px;
+            padding: 0 8px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all .3s ease;
+            cursor: pointer;
+        }
+
+        .item-link:hover, .item.active .item-link {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .item.active .item-link {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .icon-wrapper {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tooltip-custom {
+            position: absolute;
+            top: 50%;
+            left: calc(100% + 12px);
+            transform: translateY(-50%);
+            z-index: 1000;
+            background: #1f2937;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            opacity: 0;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: opacity .2s ease;
+        }
+
+        .item:hover .tooltip-custom {
+            opacity: 1;
+        }
+
+        .sidebar.expanded .tooltip-custom {
+            display: none;
+        }
+
+        .sidebar__footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn {
+            width: 100%;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            cursor: pointer;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Main Content Adjustment */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            transition: margin-left .3s ease;
+            overflow-y: auto;
+            min-width: 0;
+        }
+
+        body.sidebar-expanded .main-content {
+            margin-left: var(--sidebar-expanded-width);
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        /* Search & Button Styling */
+        .search-container {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            height: 42px;
+            padding: 10px 16px 10px 42px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            background-color: #fff;
+            border-color: #1b3da1;
+            box-shadow: 0 0 0 3px rgba(27, 61, 161, 0.1);
+            outline: none;
+        }
+
+        .btn-create {
+            height: 42px;
+            padding: 0 24px;
+            background: linear-gradient(135deg, #1b3da1 0%, #3056c5 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(27, 61, 161, 0.2);
+        }
+
+        .btn-create:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(27, 61, 161, 0.3);
+            color: #fff;
+            filter: brightness(1.1);
+        }
+
+        .btn-create:active {
+            transform: translateY(0);
+        }
+
+        /* Table Styles matching table.html */
+        .table-responsive {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            padding: 16px;
+            padding-top: 0;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background-color: #fff;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: none;
+            font-size: 13px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table tbody td {
+            padding: 12px 16px;
+            vertical-align: middle;
+            color: #495057;
+            border-bottom: 1px solid #f2f2f2;
+            font-size: 14px;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8faff;
+        }
+
+        .th-allow-sort {
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .icon-sort {
+            color: #ced4da;
+            margin-right: 4px;
+            font-size: 12px;
+        }
+
+        .avatar {
+            border-radius: 50%;
+            object-fit: cover;
+            background-color: #f0f2f5;
+        }
+
+        .btn-action-table {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 4px;
+        }
+
+        .btn-action-table:hover {
+            background-color: #f0f2f5;
+        }
+
+        .btn-action-table img {
+            width: 16px;
+            height: 16px;
+        }
+
+        .column-checkbox {
+            width: 40px;
+            text-align: center;
+        }
+
+        /* Basic Checkbox Style */
+        .basic-checkbox {
+            display: inline-block;
+            position: relative;
+            padding-left: 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .basic-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 18px;
+            width: 18px;
+            background-color: #fff;
+            border: 2px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        .basic-checkbox:hover input ~ .checkmark {
+            border-color: #1b3da1;
+        }
+
+        .basic-checkbox input:checked ~ .checkmark {
+            background-color: #1b3da1;
+            border-color: #1b3da1;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .basic-checkbox input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .basic-checkbox .checkmark:after {
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        /* Section Styles */
+        .section-view {
+            display: none;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        /* Template Card Styles */
+        .template-card {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .template-preview {
+            position: relative;
+            background: #f8f9fa;
+            border-bottom: 1px solid #edf2f7;
+            overflow: hidden;
+        }
+
+        .template-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(27, 61, 161, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .template-card:hover .template-overlay {
+            opacity: 1;
+        }
+
+        .template-badge {
+            background-color: #f1f3f9;
+            color: #536db8;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Settings & Permission Styles */
+        .settings-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .permission-table {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .permission-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            font-size: 13px;
+            color: #6c757d;
+            border-bottom: 1px solid #eee;
+        }
+
+        .permission-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f8f9fa;
+            vertical-align: middle;
+        }
+
+        .role-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .role-admin { background: #e8f0fe; color: #1b3da1; }
+        .role-editor { background: #fff4e5; color: #b45d00; }
+        .role-viewer { background: #e6fffa; color: #047857; }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: #1b3da1; }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        /* Automation Automation Styles */
+        .automation-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #edf2f7;
+        }
+
+        .step-box {
+            border: 1px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            background: #f8fafc;
+            position: relative;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: #1b3da1;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .condition-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .condition-row select, .condition-row input {
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .btn-add-condition {
+            margin-top: 15px;
+            background: #fff;
+            border: 1px solid #1b3da1;
+            color: #1b3da1;
+            font-weight: 500;
+        }
+
+        .btn-add-condition:hover {
+            background: #f0f4ff;
+        }
+
+        #condition-container {
+            display: none;
+        }
+    </style>
+</head>
+<body class="sidebar-expanded">
+
+    <!-- Sidebar -->
+    <div class="sidebar expanded" id="sidebar">
+        <div class="sidebar__logo">
+            <div class="logo">
+                <img src="http://app.vn/assets/images/app-automation.svg" width="24" alt="">
+            </div>
+            <span class="sidebar-text">Form Builder</span>
+        </div>
+        
+        <div class="sidebar__items">
+            <div class="item active" id="nav-form-list">
+                <a class="item-link" onclick="showSection('form-list', 'nav-form-list')">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <span class="sidebar-text">Danh sách form</span>
+                </a>
+                <span class="tooltip-custom">Danh sách form</span>
+            </div>
+            <div class="item" id="nav-templates">
+                <a class="item-link" onclick="showSection('templates', 'nav-templates')">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <span class="sidebar-text">Template</span>
+                </a>
+                <span class="tooltip-custom">Template</span>
+            </div>
+            <div class="item" id="nav-automation">
+                <a class="item-link" onclick="showSection('automation', 'nav-automation')">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <span class="sidebar-text">Automation</span>
+                </a>
+                <span class="tooltip-custom">Automation</span>
+            </div>
+            <div class="item" id="nav-settings">
+                <a class="item-link" onclick="showSection('settings', 'nav-settings')">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <span class="sidebar-text">Cài đặt</span>
+                </a>
+                <span class="tooltip-custom">Cài đặt</span>
+            </div>
+        </div>
+
+        <div class="sidebar__footer">
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <i class="fas fa-angle-double-left" id="toggle-icon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- Section: Danh sách form -->
+        <div id="form-list" class="section-view active">
+            <div class="content-header">
+                <div>
+                    <h3>Danh sách form</h3>
+                    <p class="text-muted small">Quản lý và theo dõi các form đã tạo</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="search-input" id="searchForm" placeholder="Tìm kiếm tên form..." onkeyup="filterForms()">
+                    </div>
+                    <button class="btn btn-create">
+                        <i class="fas fa-plus"></i>Tạo mới
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive custom-scrollbar">
+                <table class="table" id="formsTable">
+                    <thead>
+                        <tr>
+                            <th class="column-checkbox">
+                                <label class="basic-checkbox standalone">
+                                    <input type="checkbox" id="selectAll">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </th>
+                            <th class="th-allow-sort">
+                                <span class="icon-sort"><i class="fas fa-sort"></i></span>
+                                Tên form
+                            </th>
+                            <th class="th-allow-sort">
+                                <span class="icon-sort"><i class="fas fa-sort"></i></span>
+                                Người tạo
+                            </th>
+                            <th class="th-allow-sort">
+                                <span class="icon-sort"><i class="fas fa-sort"></i></span>
+                                Ngày tạo
+                            </th>
+                            <th class="text-center">Mapping</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="column-checkbox">
+                                <label class="basic-checkbox standalone">
+                                    <input type="checkbox" class="row-checkbox">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold cursor-pointer">Đăng ký nhận tin</span>
+                                    <span class="text-muted small">ID: 10293</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://smax.app/assets/images/noavatar.png" width="30" height="30" class="avatar me-2" alt="Admin">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-500">Admin</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>15/04/2026 09:30</td>
+                            <td class="text-center">
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end">
+                                    <a href="form_detail.html?id=10293" class="btn-action-table" title="Xem">
+                                        <i class="far fa-eye text-muted"></i>
+                                    </a>
+                                    <span class="btn-action-table" title="Sửa">
+                                        <i class="far fa-edit text-muted"></i>
+                                    </span>
+                                    <span class="btn-action-table" title="Xóa">
+                                        <i class="far fa-trash-alt text-danger"></i>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="column-checkbox">
+                                <label class="basic-checkbox standalone">
+                                    <input type="checkbox" class="row-checkbox">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold cursor-pointer">Khảo sát khách hàng</span>
+                                    <span class="text-muted small">ID: 10294</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://smax.app/assets/images/noavatar.png" width="30" height="30" class="avatar me-2" alt="User">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-500">Nguyễn Văn A</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>12/04/2026 14:15</td>
+                            <td class="text-center">
+                                <label class="switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end">
+                                    <span class="btn-action-table">
+                                        <i class="far fa-eye text-muted"></i>
+                                    </span>
+                                    <span class="btn-action-table">
+                                        <i class="far fa-edit text-muted"></i>
+                                    </span>
+                                    <span class="btn-action-table">
+                                        <i class="far fa-trash-alt text-danger"></i>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="column-checkbox">
+                                <label class="basic-checkbox standalone">
+                                    <input type="checkbox" class="row-checkbox">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold cursor-pointer">Liên hệ tư vấn</span>
+                                    <span class="text-muted small">ID: 10295</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://smax.app/assets/images/noavatar.png" width="30" height="30" class="avatar me-2" alt="Admin">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-500">Admin</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>10/04/2026 10:00</td>
+                            <td class="text-center">
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end">
+                                    <span class="btn-action-table">
+                                        <i class="far fa-eye text-muted"></i>
+                                    </span>
+                                    <span class="btn-action-table">
+                                        <i class="far fa-edit text-muted"></i>
+                                    </span>
+                                    <span class="btn-action-table">
+                                        <i class="far fa-trash-alt text-danger"></i>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section: Templates -->
+        <div id="templates" class="section-view">
+            <div class="content-header">
+                <div>
+                    <h3>Templates</h3>
+                    <p class="text-muted small">Chọn mẫu form có sẵn để bắt đầu nhanh hơn</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary"><i class="fas fa-plus me-2"></i>Thêm template mới</button>
+                </div>
+            </div>
+            
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <!-- Template 1 -->
+                <div class="col">
+                    <div class="card h-100 template-card">
+                        <div class="template-preview d-flex align-items-center justify-content-center p-5" style="height: 180px;">
+                            <i class="far fa-file-alt fa-3x text-muted"></i>
+                            <div class="template-overlay">
+                                <button class="btn btn-light btn-sm me-2 fw-bold px-3">Dùng mẫu</button>
+                                <button class="btn btn-outline-light btn-sm fw-bold px-3">Xem trước</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-1">Form đăng ký sự kiện</h6>
+                            <p class="card-text text-muted small">Thu thập thông tin người tham gia hội thảo, sự kiện trực tuyến.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="template-badge">CƠ BẢN</span>
+                                <small class="text-muted"><i class="far fa-user me-1"></i>1.2k</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template 2 -->
+                <div class="col">
+                    <div class="card h-100 template-card">
+                        <div class="template-preview d-flex align-items-center justify-content-center p-5" style="height: 180px;">
+                            <i class="far fa-user fa-3x text-muted"></i>
+                            <div class="template-overlay">
+                                <button class="btn btn-light btn-sm me-2 fw-bold px-3">Dùng mẫu</button>
+                                <button class="btn btn-outline-light btn-sm fw-bold px-3">Xem trước</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-1">Thông tin ứng viên</h6>
+                            <p class="card-text text-muted small">Mẫu tuyển dụng cho các doanh nghiệp vừa và nhỏ.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="template-badge">NHÂN SỰ</span>
+                                <small class="text-muted"><i class="far fa-user me-1"></i>850</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template 3 -->
+                <div class="col">
+                    <div class="card h-100 template-card">
+                        <div class="template-preview d-flex align-items-center justify-content-center p-5" style="height: 180px;">
+                            <i class="fas fa-shopping-cart fa-3x text-muted"></i>
+                            <div class="template-overlay">
+                                <button class="btn btn-light btn-sm me-2 fw-bold px-3">Dùng mẫu</button>
+                                <button class="btn btn-outline-light btn-sm fw-bold px-3">Xem trước</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-1">Đặt hàng trực tuyến</h6>
+                            <p class="card-text text-muted small">Tích hợp thanh toán và tính phí vận chuyển tự động.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="template-badge">BÁN HÀNG</span>
+                                <small class="text-muted"><i class="far fa-user me-1"></i>2.5k</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template 4 -->
+                <div class="col">
+                    <div class="card h-100 template-card">
+                        <div class="template-preview d-flex align-items-center justify-content-center p-5" style="height: 180px;">
+                            <i class="far fa-comment-dots fa-3x text-muted"></i>
+                            <div class="template-overlay">
+                                <button class="btn btn-light btn-sm me-2 fw-bold px-3">Dùng mẫu</button>
+                                <button class="btn btn-outline-light btn-sm fw-bold px-3">Xem trước</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-1">Feedback sản phẩm</h6>
+                            <p class="card-text text-muted small">Khảo sát ý kiến người dùng sau khi trải nghiệm sản phẩm.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="template-badge">FEEDBACK</span>
+                                <small class="text-muted"><i class="far fa-user me-1"></i>640</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Automation -->
+        <div id="automation" class="section-view">
+            <div class="content-header">
+                <div>
+                    <h3>Tạo mới Trigger</h3>
+                    <p class="text-muted small">Tự động hóa quy trình khi có dữ liệu form mới</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <i class="fas fa-trash-alt text-danger cursor-pointer"></i>
+                </div>
+            </div>
+
+            <div class="automation-card">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Tên</label>
+                        <input type="text" class="form-control" placeholder="Nhập tên trigger">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Ảnh</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="URL hoặc tải ảnh từ thư viện...">
+                            <span class="input-group-text"><i class="fas fa-cloud-upload-alt"></i></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Loại sự kiện</label>
+                        <select class="form-select">
+                            <option selected disabled>Chọn loại sự kiện</option>
+                            <option value="create">Thêm mới form</option>
+                            <option value="update">Cập nhật form</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="step-number">01</div>
+                        <h6 class="mb-0 fw-bold">Kiểm tra trạng thái</h6>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Chọn Template</label>
+                            <select class="form-select" id="templateSelect" onchange="showCriteriaButton()">
+                                <option selected disabled>Chọn template</option>
+                                <option value="1">Form đăng ký sự kiện</option>
+                                <option value="2">Thông tin ứng viên</option>
+                                <option value="3">Đặt hàng trực tuyến</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button id="btn-show-criteria" class="btn btn-outline-primary" style="display: none;" onclick="toggleConditionContainer()">
+                                <i class="fas fa-plus me-2"></i>Chọn tiêu chí
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="condition-container" class="mt-4 border-top pt-3" style="display: none;">
+                        <label class="form-label small fw-bold">Cấu hình điều kiện so sánh</label>
+                        <div id="conditions-list">
+                            <div class="condition-row mb-2">
+                                <input type="text" class="form-control" placeholder="Nhập tiêu chí (ví dụ: age)" style="flex: 2;">
+                                <select class="form-select" style="flex: 1;">
+                                    <option value="=">=</option>
+                                    <option value=">">></option>
+                                    <option value="<"><</option>
+                                    <option value="contains">Chứa trong khoảng</option>
+                                    <option value="!=">Khác</option>
+                                </select>
+                                <input type="text" class="form-control" placeholder="Giá trị so sánh" style="flex: 2;">
+                                <button class="btn btn-sm btn-light text-danger" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-add-condition mt-2" onclick="addNewCondition()">
+                            <i class="fas fa-plus me-2"></i>Thêm điều kiện
+                        </button>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="form-label small">Go to Block</label>
+                        <select class="form-select w-50">
+                            <option selected disabled>Chọn Block</option>
+                            <option>Gửi tin nhắn chào mừng</option>
+                            <option>Thông báo cho Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+                    <button class="btn btn-primary px-4"><i class="fas fa-plus me-2"></i>Thêm điều kiện</button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light px-4">Quay lại</button>
+                        <button class="btn btn-create px-5">Lưu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+                                <small class="text-muted"><i class="far fa-user me-1"></i>2.5k</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template 4 -->
+                <div class="col">
+                    <div class="card h-100 template-card">
+                        <div class="template-preview d-flex align-items-center justify-content-center p-5" style="height: 180px;">
+                            <i class="far fa-comment-dots fa-3x text-muted"></i>
+                            <div class="template-overlay">
+                                <button class="btn btn-light btn-sm me-2 fw-bold px-3">Dùng mẫu</button>
+                                <button class="btn btn-outline-light btn-sm fw-bold px-3">Xem trước</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-1">Feedback sản phẩm</h6>
+                            <p class="card-text text-muted small">Khảo sát ý kiến người dùng sau khi trải nghiệm sản phẩm.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="template-badge">FEEDBACK</span>
+                                <small class="text-muted"><i class="far fa-user me-1"></i>640</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Settings -->
+        <div id="settings" class="section-view">
+            <div class="content-header">
+                <div>
+                    <h3>Cài đặt & Phân quyền</h3>
+                    <p class="text-muted small">Cấu hình hệ thống và quản lý quyền người dùng</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Quyền người dùng -->
+                    <div class="settings-card">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-users-cog me-2 text-primary"></i>Phân quyền vai trò</h6>
+                        <div class="table-responsive">
+                            <table class="permission-table">
+                                <thead>
+                                    <tr>
+                                        <th>Chức năng</th>
+                                        <th class="text-center">Admin</th>
+                                        <th class="text-center">Editor</th>
+                                        <th class="text-center">Viewer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Xem danh sách & phản hồi</td>
+                                        <td class="text-center"><i class="fas fa-check-circle text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check-circle text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check-circle text-success"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tạo mới Form / Template</td>
+                                        <td class="text-center"><i class="fas fa-check-circle text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-check-circle text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-times-circle text-danger"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chỉnh sửa cấu hình (Settings)</td>
+                                        <td class="text-center"><i class="fas fa-check-circle text-success"></i></td>
+                                        <td class="text-center"><i class="fas fa-times-circle text-danger"></i></td>
+                                        <td class="text-center"><i class="fas fa-times-circle text-danger"></i></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Map CRM Attributes</td>
+                                        <td class="text-center">
+                                            <label class="switch">
+                                                <input type="checkbox" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </td>
+                                        <td class="text-center">
+                                            <label class="switch">
+                                                <input type="checkbox">
+                                                <span class="slider"></span>
+                                            </label>
+                                        </td>
+                                        <td class="text-center">
+                                            <label class="switch">
+                                                <input type="checkbox" disabled>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="settings-card">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-bell me-2 text-primary"></i>Thông báo</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="small">Thông báo có lead mới qua Email</span>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-0">
+                            <span class="small">Thông báo qua Browser</span>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-primary"></i>Bảo mật</h6>
+                        <button class="btn btn-outline-secondary btn-sm w-100 mb-2">Đổi mật khẩu</button>
+                        <button class="btn btn-outline-danger btn-sm w-100">Xóa dữ liệu dùng thử</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function showCriteriaButton() {
+            document.getElementById('btn-show-criteria').style.display = 'block';
+        }
+
+        function toggleConditionContainer() {
+            const container = document.getElementById('condition-container');
+            container.style.display = container.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function addNewCondition() {
+            const list = document.getElementById('conditions-list');
+            const row = document.createElement('div');
+            row.className = 'condition-row mb-2';
+            row.style.display = 'flex';
+            row.style.gap = '10px';
+            row.style.alignItems = 'center';
+            row.innerHTML = `
+                <input type="text" class="form-control" placeholder="Nhập tiêu chí (ví dụ: age)" style="flex: 2;">
+                <select class="form-select" style="flex: 1;">
+                    <option value="=">=</option>
+                    <option value=">">></option>
+                    <option value="<"><</option>
+                    <option value="contains">Chứa trong khoảng</option>
+                    <option value="!=">Khác</option>
+                </select>
+                <input type="text" class="form-control" placeholder="Giá trị so sánh" style="flex: 2;">
+                <button class="btn btn-sm btn-light text-danger" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+            `;
+            list.appendChild(row);
+        }
+
+        function showSection(sectionId, navId) {
+            // Update sidebar active state
+            document.querySelectorAll('.item').forEach(item => item.classList.remove('active'));
+            document.getElementById(navId).classList.add('active');
+
+            // Show selected section
+            document.querySelectorAll('.section-view').forEach(view => view.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const body = document.body;
+            
+            sidebar.classList.toggle('expanded');
+            body.classList.toggle('sidebar-expanded');
+
+            if (sidebar.classList.contains('expanded')) {
+                toggleIcon.classList.remove('fa-angle-double-right');
+                toggleIcon.classList.add('fa-angle-double-left');
+            } else {
+                toggleIcon.classList.remove('fa-angle-double-left');
+                toggleIcon.classList.add('fa-angle-double-right');
+            }
+        }
+
+        function filterForms() {
+            let input = document.getElementById("searchForm");
+            let filter = input.value.toLowerCase();
+            let table = document.getElementById("formsTable");
+            let tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                let td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    let txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
